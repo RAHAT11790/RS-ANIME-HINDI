@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, X, Check } from "lucide-react";
+import { Bell, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { db, ref, onValue, set, update } from "@/lib/firebase";
 
@@ -25,36 +25,57 @@ const NotificationPanel = ({ userId, onOpenContent }: NotificationPanelProps) =>
 
   useEffect(() => {
     if (!userId) return;
+
     const notifsRef = ref(db, `notifications/${userId}`);
+    
     const unsub = onValue(notifsRef, (snapshot) => {
       const data = snapshot.val();
-      if (!data) { setNotifications([]); return; }
+      
+      if (!data) { 
+        setNotifications([]); 
+        return; 
+      }
+      
       const items: Notification[] = [];
+      
       Object.entries(data).forEach(([id, item]: [string, any]) => {
+        // নিশ্চিত করুন টাইমস্ট্যাম্প সঠিক আছে
+        const timestamp = typeof item.timestamp === 'number' ? item.timestamp : Date.now();
+        
         items.push({
           id,
-          title: item.title || "",
+          title: item.title || "Notification",
           message: item.message || "",
-          type: item.type || "",
+          type: item.type || "info",
           contentId: item.contentId || "",
           read: item.read || false,
-          timestamp: item.timestamp || Date.now(),
+          timestamp: timestamp,
         });
       });
+      
+      // নতুন থেকে পুরাতন সাজান
       items.sort((a, b) => b.timestamp - a.timestamp);
+      
       setNotifications(items);
+    }, (error) => {
+      console.error("Error loading notifications:", error);
     });
+    
     return () => unsub();
   }, [userId]);
 
-  // Close dropdown on outside click
+  // ড্রপডাউন বন্ধ করুন বাইরে ক্লিক করলে
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
-    if (open) document.addEventListener("mousedown", handler);
+    
+    if (open) {
+      document.addEventListener("mousedown", handler);
+    }
+    
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
@@ -62,10 +83,14 @@ const NotificationPanel = ({ userId, onOpenContent }: NotificationPanelProps) =>
 
   const markAllAsRead = () => {
     if (!userId || notifications.length === 0) return;
+    
     const updates: Record<string, boolean> = {};
     notifications.forEach((n) => {
-      if (!n.read) updates[`notifications/${userId}/${n.id}/read`] = true;
+      if (!n.read) {
+        updates[`notifications/${userId}/${n.id}/read`] = true;
+      }
     });
+    
     if (Object.keys(updates).length > 0) {
       update(ref(db), updates);
     }
@@ -75,7 +100,9 @@ const NotificationPanel = ({ userId, onOpenContent }: NotificationPanelProps) =>
     if (!notif.read && userId) {
       set(ref(db, `notifications/${userId}/${notif.id}/read`), true);
     }
+    
     setOpen(false);
+    
     if (notif.contentId && onOpenContent) {
       onOpenContent(notif.contentId);
     }
@@ -84,13 +111,20 @@ const NotificationPanel = ({ userId, onOpenContent }: NotificationPanelProps) =>
   const timeAgo = (ts: number) => {
     const diff = Date.now() - ts;
     const mins = Math.floor(diff / 60000);
+    
     if (mins < 1) return "Just now";
     if (mins < 60) return `${mins}m ago`;
+    
     const hours = Math.floor(mins / 60);
     if (hours < 24) return `${hours}h ago`;
+    
     const days = Math.floor(hours / 24);
     if (days < 7) return `${days}d ago`;
-    return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    
+    return new Date(ts).toLocaleDateString("en-US", { 
+      month: "short", 
+      day: "numeric" 
+    });
   };
 
   return (
@@ -121,12 +155,14 @@ const NotificationPanel = ({ userId, onOpenContent }: NotificationPanelProps) =>
             {/* Header */}
             <div className="flex justify-between items-center px-4 py-3 border-b border-border/30">
               <h4 className="text-sm font-semibold">Notifications</h4>
-              <button
-                onClick={markAllAsRead}
-                className="text-[11px] text-primary hover:underline bg-transparent border-none cursor-pointer flex items-center gap-1"
-              >
-                <Check className="w-3 h-3" /> Mark all as read
-              </button>
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className="text-[11px] text-primary hover:underline bg-transparent border-none cursor-pointer flex items-center gap-1"
+                >
+                  <Check className="w-3 h-3" /> Mark all as read
+                </button>
+              )}
             </div>
 
             {/* List */}
