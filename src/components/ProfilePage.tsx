@@ -67,17 +67,17 @@ const ProfilePage = ({ onClose }: ProfilePageProps) => {
         </button>
 
         <div className="space-y-3">
-          {[
-            { label: "Notifications", desc: "Manage notification preferences" },
-            { label: "Video Quality", desc: "Default streaming quality" },
-            { label: "Language", desc: "App language settings" },
-            { label: "About RS ANIME", desc: "Version 2.0" },
-          ].map((item) => (
-            <div key={item.label} className="glass-card px-4 py-4 rounded-xl">
-              <p className="text-sm font-medium">{item.label}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{item.desc}</p>
-            </div>
-          ))}
+          {/* Notifications */}
+          <div className="glass-card px-4 py-4 rounded-xl">
+            <p className="text-sm font-medium">Notifications</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Manage notification preferences</p>
+          </div>
+          
+          {/* About RS ANIME */}
+          <div className="glass-card px-4 py-4 rounded-xl">
+            <p className="text-sm font-medium">About RS ANIME</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Version 2.0</p>
+          </div>
         </div>
       </motion.div>
     );
